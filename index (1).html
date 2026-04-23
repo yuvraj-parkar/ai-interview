@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InterviewAI — Smart Mock Interview Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #07080f;
+  --s1:       #0f1020;
+  --s2:       #161828;
+  --border:   #1e2035;
+  --border2:  #2a2d4a;
+  --accent:   #4f8ef7;
+  --accent2:  #7c3aed;
+  --green:    #10b981;
+  --orange:   #f59e0b;
+  --red:      #ef4444;
+  --text:     #e2e4f0;
+  --muted:    #6b7299;
+  --font:     'Bricolage Grotesque', sans-serif;
+  --mono:     'JetBrains Mono', monospace;
+  --r:        14px;
+  --r2:       20px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+/* ── NOISE TEXTURE ── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:.4;pointer-events:none;z-index:0}
+
+/* ── PAGES ── */
+.page{display:none;position:relative;z-index:1}
+.page.active{display:block}
+
+/* ── GLOW ORBS ── */
+.orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
+.orb-blue{width:600px;height:600px;background:rgba(79,142,247,.06);top:-100px;right:-100px}
+.orb-purple{width:500px;height:500px;background:rgba(124,58,237,.05);bottom:-100px;left:-100px}
+
+/* ═══════════════════════════════════════════════
+   AUTH PAGES  (Login / Register)
+═══════════════════════════════════════════════ */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.auth-box{width:100%;max-width:440px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:44px 40px;position:relative;z-index:2}
+.auth-logo{text-align:center;margin-bottom:32px}
+.auth-logo .logo-text{font-size:1.6rem;font-weight:800;letter-spacing:-1px}
+.auth-logo .logo-text span{color:var(--accent)}
+.auth-logo p{font-size:.85rem;color:var(--muted);margin-top:6px}
+.auth-tabs{display:flex;background:var(--s2);border-radius:10px;padding:4px;margin-bottom:28px}
+.auth-tab{flex:1;text-align:center;padding:10px;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;color:var(--muted)}
+.auth-tab.active{background:var(--s1);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+.form-group input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:13px 16px;color:var(--text);font-family:var(--font);font-size:.95rem;transition:border .2s}
+.form-group input:focus{outline:none;border-color:var(--accent)}
+.form-group input::placeholder{color:var(--muted)}
+.avatar-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.avatar-opt{width:44px;height:44px;background:var(--s2);border:2px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;transition:all .2s}
+.avatar-opt:hover,.avatar-opt.selected{border-color:var(--accent);background:rgba(79,142,247,.1)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--r);padding:13px 28px;font-family:var(--font);font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.2px}
+.btn-primary{background:var(--accent);color:#fff;width:100%;margin-top:4px}
+.btn-primary:hover{background:#3d7def;box-shadow:0 4px 20px rgba(79,142,247,.35);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-sm{padding:8px 16px;font-size:.82rem}
+.err-msg{color:var(--red);font-size:.8rem;margin-top:8px;text-align:center}
+.auth-divider{text-align:center;color:var(--muted);font-size:.8rem;margin:20px 0;position:relative}
+.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:var(--border)}
+.auth-divider::before{left:0} .auth-divider::after{right:0}
+
+/* ═══════════════════════════════════════════════
+   MAIN APP LAYOUT
+═══════════════════════════════════════════════ */
+.app-layout{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar-nav{width:240px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 16px;position:fixed;top:0;left:0;height:100vh;z-index:50}
+.nav-logo{font-size:1.2rem;font-weight:800;letter-spacing:-1px;padding:8px 12px;margin-bottom:28px}
+.nav-logo span{color:var(--accent)}
+.nav-items{flex:1;display:flex;flex-direction:column;gap:4px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--r);color:var(--muted);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.nav-item:hover{background:var(--s2);color:var(--text)}
+.nav-item.active{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+.nav-item .nav-icon{font-size:1.1rem;width:20px;text-align:center}
+.nav-user{margin-top:auto;padding:14px;background:var(--s2);border-radius:var(--r);display:flex;align-items:center;gap:10px}
+.nav-user .u-avatar{font-size:1.4rem}
+.nav-user .u-name{font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-user .u-email{font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-logout{margin-top:8px;width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:var(--font);font-size:.8rem;cursor:pointer;transition:all .2s}
+.nav-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ── MAIN CONTENT ── */
+.main-content{margin-left:240px;flex:1;min-height:100vh}
+.content-inner{padding:36px 40px;max-width:1100px}
+
+/* ═══════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════ */
+.page-header{margin-bottom:32px}
+.page-title{font-size:2rem;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
+.page-sub{font-size:.9rem;color:var(--muted)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:22px 24px;transition:border .2s}
+.stat-box:hover{border-color:var(--border2)}
+.stat-val{font-size:2.2rem;font-weight:800;font-family:var(--mono);letter-spacing:-1px;margin-bottom:4px}
+.stat-val.blue{color:var(--accent)} .stat-val.purple{color:#a78bfa} .stat-val.green{color:var(--green)} .stat-val.orange{color:var(--orange)}
+.stat-label{font-size:.78rem;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:24px}
+.card-title{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:18px}
+
+/* Chart bars */
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:100px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bar{width:100%;background:rgba(79,142,247,.25);border-radius:4px 4px 0 0;border:1px solid rgba(79,142,247,.4);transition:height .5s;min-height:4px;cursor:pointer;position:relative}
+.bar:hover{background:rgba(79,142,247,.5)}
+.bar-tip{position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;font-family:var(--mono);font-size:.65rem;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.bar:hover .bar-tip{opacity:1}
+.bar-label{font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+
+/* Emotion chips */
+.emotion-chips{display:flex;flex-direction:column;gap:8px}
+.emotion-chip-row{display:flex;align-items:center;gap:10px}
+.em-name{font-size:.82rem;font-weight:600;width:80px;text-transform:capitalize}
+.em-track{flex:1;height:6px;background:var(--s2);border-radius:100px}
+.em-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),#a78bfa);transition:width .5s}
+.em-count{font-family:var(--mono);font-size:.7rem;color:var(--muted);width:24px;text-align:right}
+
+/* Recent list */
+.recent-list{display:flex;flex-direction:column;gap:10px}
+.recent-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--s2);border-radius:var(--r);border:1px solid var(--border);transition:border .2s;cursor:pointer}
+.recent-item:hover{border-color:var(--border2)}
+.ri-icon{font-size:1.3rem;width:36px;height:36px;background:var(--s1);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.ri-topic{font-size:.88rem;font-weight:700;text-transform:capitalize}
+.ri-date{font-size:.72rem;color:var(--muted)}
+.ri-score{margin-left:auto;font-family:var(--mono);font-size:.9rem;font-weight:600;color:var(--accent)}
+
+/* ═══════════════════════════════════════════════
+   INTERVIEW PAGE
+═══════════════════════════════════════════════ */
+.topic-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.topic-card{background:var(--s1);border:2px solid var(--border);border-radius:var(--r2);padding:22px 18px;text-align:center;cursor:pointer;transition:all .2s}
+.topic-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.topic-card.sel{border-color:var(--accent);background:rgba(79,142,247,.08)}
+.tc-icon{font-size:2rem;margin-bottom:10px}
+.tc-name{font-size:.88rem;font-weight:700}
+.tc-desc{font-size:.72rem;color:var(--muted);margin-top:4px}
+
+/* Interview screen */
+.interview-screen{display:none}
+.interview-screen.active{display:grid;grid-template-columns:1fr 300px;gap:20px}
+.setup-screen{display:block}
+.setup-screen.hidden{display:none}
+
+.progress-strip{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:20px 24px;margin-bottom:20px;grid-column:1/-1}
+.ps-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ps-title{font-weight:700;font-size:.9rem}
+.ps-num{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+.prog-track{height:3px;background:var(--border);border-radius:100px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),#a78bfa);border-radius:100px;transition:width .4s}
+
+.q-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:28px}
+.q-num-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:100px;padding:4px 14px;font-family:var(--mono);font-size:.7rem;color:var(--accent);margin-bottom:16px}
+.q-text{font-size:1.15rem;font-weight:700;line-height:1.55;letter-spacing:-.2px}
+
+.ans-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:24px;display:flex;flex-direction:column;gap:14px}
+.ans-top{display:flex;justify-content:space-between;align-items:center}
+.ans-label{font-family:var(--mono);font-size:.68rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.mic-btn{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 16px;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:.8rem;font-weight:600;transition:all .2s}
+.mic-btn:hover{border-color:var(--green)}
+.mic-btn.rec{background:rgba(239,68,68,.1);border-color:var(--red);color:var(--red);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+textarea{width:100%;min-height:140px;background:var(--s2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:.85rem;line-height:1.7;padding:14px;resize:vertical;transition:border .2s}
+textarea:focus{outline:none;border-color:var(--accent)}
+.ans-actions{display:flex;gap:10px}
+.btn-submit{background:var(--accent);color:#fff;flex:1}
+.btn-submit:hover{background:#3d7def}
+.btn-skip{background:var(--s2);border:1px solid var(--border);color:var(--muted)}
+.btn-skip:hover{border-color:var(--border2);color:var(--text)}
+
+/* Score chips after submit */
+.score-chips{display:none;gap:8px;flex-wrap:wrap}
+.score-chips.show{display:flex}
+.chip{font-family:var(--mono);font-size:.72rem;padding:5px 12px;border-radius:8px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);color:var(--accent)}
+.chip.g{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2);color:var(--green)}
+.chip.o{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);color:var(--orange)}
+
+.feedback-list{display:none;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.feedback-list.show{display:block}
+.feedback-list li{list-style:none;font-size:.82rem;color:var(--muted);padding:3px 0;line-height:1.6}
+
+/* Webcam sidebar */
+.cam-widget{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.cam-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border)}
+.cam-title{font-size:.85rem;font-weight:700}
+.rec-dot{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.65rem;color:var(--red)}
+.rec-dot::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
+video{width:100%;display:block;background:#000;aspect-ratio:4/3;object-fit:cover}
+.emotion-panel{padding:14px 18px}
+.ep-label{font-family:var(--mono);font-size:.65rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.emotion-display{display:flex;align-items:center;gap:12px;padding:12px;background:var(--s2);border-radius:10px}
+.em-big{font-size:1.7rem}
+.em-info .em-nm{font-weight:700;text-transform:capitalize}
+.em-info .em-cv{font-family:var(--mono);font-size:.72rem;color:var(--green)}
+
+.perf-widget{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-top:14px}
+.perf-title{font-family:var(--mono);font-size:.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.perf-row{margin-bottom:12px}
+.perf-lbl{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px}
+.perf-val{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+.perf-track{height:3px;background:var(--border);border-radius:100px}
+.perf-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),#a78bfa);transition:width .5s}
+.end-btn{width:100%;margin-top:14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--red);padding:10px;border-radius:10px;font-family:var(--font);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s}
+.end-btn:hover{background:rgba(239,68,68,.2)}
+
+/* ═══════════════════════════════════════════════
+   REPORT PAGE (inline after interview)
+═══════════════════════════════════════════════ */
+.report-screen{display:none}
+.report-screen.active{display:block}
+.report-hero{text-align:center;padding:40px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+.report-badge{display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--green);border:1px solid rgba(16,185,129,.3);padding:5px 16px;border-radius:100px;margin-bottom:20px}
+.report-score-big{font-size:5.5rem;font-weight:800;font-family:var(--mono);letter-spacing:-4px;line-height:1;color:var(--accent);margin:16px 0 8px}
+.report-grade{font-size:1.1rem;color:var(--muted)}
+.report-sub-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.rsub{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:20px;text-align:center}
+.rsub-val{font-size:1.8rem;font-weight:800;font-family:var(--mono);color:var(--accent2)}
+.rsub-label{font-size:.72rem;color:var(--muted);margin-top:4px}
+.report-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:28px;margin-bottom:16px}
+.report-card h3{font-size:.8rem;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+.report-text{font-size:.9rem;line-height:1.85;color:var(--muted);white-space:pre-line}
+.qa-review{display:flex;flex-direction:column;gap:12px}
+.qa-item{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.qa-q{font-size:.82rem;font-weight:700;margin-bottom:8px}
+.qa-a{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:10px;font-style:italic}
+.qa-score-row{display:flex;gap:8px;flex-wrap:wrap}
+.report-actions{display:flex;gap:12px;justify-content:center;margin-top:24px}
+
+/* ═══════════════════════════════════════════════
+   HISTORY PAGE
+═══════════════════════════════════════════════ */
+.history-filters{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.filter-btn{padding:7px 16px;border-radius:100px;border:1px solid var(--border);background:var(--s1);color:var(--muted);font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s}
+.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.08)}
+.history-grid{display:flex;flex-direction:column;gap:14px}
+.history-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:22px 24px;transition:border .2s;cursor:pointer}
+.history-card:hover{border-color:var(--border2)}
+.hc-top{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.hc-icon{width:44px;height:44px;background:var(--s2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.hc-topic{font-size:1rem;font-weight:700;text-transform:capitalize;margin-bottom:3px}
+.hc-date{font-size:.75rem;color:var(--muted)}
+.hc-score{margin-left:auto;text-align:right}
+.hc-score-num{font-size:1.6rem;font-weight:800;font-family:var(--mono);color:var(--accent);line-height:1}
+.hc-grade{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.hc-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.hc-chip{font-family:var(--mono);font-size:.68rem;padding:4px 10px;border-radius:6px;background:var(--s2);border:1px solid var(--border);color:var(--muted)}
+.hc-actions{display:flex;gap:8px}
+.hc-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:var(--font);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.hc-btn:hover{border-color:var(--accent);color:var(--accent)}
+.hc-btn.red:hover{border-color:var(--red);color:var(--red)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-state .es-icon{font-size:3rem;margin-bottom:16px}
+.empty-state p{font-size:.9rem}
+
+/* ─── MODAL (interview detail / video player) ─── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);width:100%;max-width:760px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--s1);z-index:10}
+.modal-title{font-size:1rem;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;transition:color .2s}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:24px}
+.media-player{background:#000;border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.media-player video,.media-player audio{width:100%;display:block}
+.modal-qa-list{display:flex;flex-direction:column;gap:12px}
+.mqa-item{background:var(--s2);border-radius:var(--r);padding:16px}
+.mqa-num{font-family:var(--mono);font-size:.65rem;color:var(--accent);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
+.mqa-q{font-size:.85rem;font-weight:700;margin-bottom:8px}
+.mqa-a{font-size:.82rem;color:var(--muted);line-height:1.65}
+.score-bar-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.sbl{font-size:.72rem;color:var(--muted);width:70px}
+.sbt{flex:1;height:4px;background:var(--border);border-radius:100px}
+.sbf{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),#a78bfa)}
+.sbv{font-family:var(--mono);font-size:.72rem;color:var(--accent);width:30px;text-align:right}
+
+/* ── SPINNER / LOADING ── */
+.spin{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.8rem;color:var(--muted);padding:8px 0}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:12px 20px;font-size:.85rem;z-index:1000;display:none;animation:slideUp .3s ease;max-width:320px}
+.toast.show{display:block}
+.toast.success{border-color:rgba(16,185,129,.4);color:var(--green)}
+.toast.error{border-color:rgba(239,68,68,.4);color:var(--red)}
+@keyframes slideUp{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar-nav{width:60px;padding:16px 8px}
+  .nav-logo,.nav-item span,.nav-user .u-name,.nav-user .u-email,.nav-logout{display:none}
+  .nav-item{padding:11px;justify-content:center}
+  .nav-user{padding:8px;justify-content:center}
+  .main-content{margin-left:60px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .dash-grid{grid-template-columns:1fr}
+  .interview-screen.active{grid-template-columns:1fr}
+  .cam-widget,.perf-widget{display:none}
+  .report-sub-grid{grid-template-columns:1fr 1fr}
+  .topic-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .content-inner{padding:20px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .report-sub-grid{grid-template-columns:1fr}
+  .topic-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="orb orb-blue"></div>
+<div class="orb orb-purple"></div>
+
+<!-- ╔══════════════════════════════════════════════════════════╗
+     ║  AUTH PAGES                                            ║
+     ╚══════════════════════════════════════════════════════════╝ -->
+<div id="authPage" class="page active">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="logo-text">Interview<span>AI</span></div>
+        <p>Your AI-powered mock interview platform</p>
+      </div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchTab('login')">Sign In</div>
+        <div class="auth-tab" onclick="switchTab('register')">Create Account</div>
+      </div>
+
+      <!-- Login -->
+      <div id="loginForm">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <div id="loginErr" class="err-msg"></div>
+        <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Sign In →</button>
+        <div class="auth-divider">or try demo</div>
+        <button class="btn btn-ghost" style="width:100%;font-size:.85rem" onclick="demoLogin()">🚀 Demo Login</button>
+      </div>
+
+      <!-- Register -->
+      <div id="registerForm" style="display:none">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="regName" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="Min 6 characters">
+        </div>
+        <div class="form-group">
+          <label>Choose Avatar</label>
+          <div class="avatar-picker" id="avatarPicker">
+            <div class="avatar-opt selected" onclick="pickAvatar(this,'🧑‍💻')">🧑‍💻</div>
+            <div class="avatar-opt" onclick="pickAvatar(this,'👩‍💼')">👩‍💼</div>
+            <div class="avatar-opt" onclick="pickAvatar(this,'🧑‍🎓')">🧑‍🎓</div>
+            <div class="avatar-opt" onclick="pickAvatar(this,'👨‍🔬')">👨‍🔬</div>
+            <div class="avatar-opt" onclick="pickAvatar(this,'👩‍🏫')">👩‍🏫</div>
+            <div class="avatar-opt" onclick="pickAvatar(this,'🧑‍🚀')">🧑‍🚀</div>
+          </div>
+        </div>
+        <div id="regErr" class="err-msg"></div>
+        <button class="btn btn-primary" id="regBtn" onclick="doRegister()">Create Account →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════╗
+     ║  MAIN APP                                              ║
+     ╚══════════════════════════════════════════════════════════╝ -->
+<div id="appPage" class="page">
+  <div class="app-layout">
+
+    <!-- ── SIDEBAR ── -->
+    <nav class="sidebar-nav">
+      <div class="nav-logo">Interview<span>AI</span></div>
+      <div class="nav-items">
+        <div class="nav-item active" onclick="showView('dashboard')"><span class="nav-icon">🏠</span><span>Dashboard</span></div>
+        <div class="nav-item" onclick="showView('interview')"><span class="nav-icon">🎯</span><span>Practice</span></div>
+        <div class="nav-item" onclick="showView('history')"><span class="nav-icon">📋</span><span>History</span></div>
+      </div>
+      <div>
+        <div class="nav-user">
+          <div class="u-avatar" id="navAvatar">👤</div>
+          <div><div class="u-name" id="navName">—</div><div class="u-email" id="navEmail">—</div></div>
+        </div>
+        <button class="nav-logout" onclick="logout()">↩ Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- ── MAIN ── -->
+    <div class="main-content">
+      <div class="content-inner">
+
+        <!-- ─── DASHBOARD ─── -->
+        <div id="viewDashboard">
+          <div class="page-header">
+            <div class="page-title" id="dashGreeting">Welcome back 👋</div>
+            <div class="page-sub">Here's your interview performance overview</div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-box"><div class="stat-val blue" id="statTotal">0</div><div class="stat-label">Interviews Done</div></div>
+            <div class="stat-box"><div class="stat-val green" id="statAvg">—</div><div class="stat-label">Avg Score</div></div>
+            <div class="stat-box"><div class="stat-val purple" id="statBest">—</div><div class="stat-label">Best Score</div></div>
+            <div class="stat-box"><div class="stat-val orange" id="statTopics">0</div><div class="stat-label">Topics Practiced</div></div>
+          </div>
+          <div class="dash-grid">
+            <div class="card">
+              <div class="card-title">Score Progress</div>
+              <div class="bar-chart" id="barChart"><div style="color:var(--muted);font-size:.8rem;margin:auto">No interviews yet</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Emotion Breakdown</div>
+              <div class="emotion-chips" id="emotionChart"><div style="color:var(--muted);font-size:.8rem">No data yet</div></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:20px">
+            <div class="card-title">Recent Interviews</div>
+            <div class="recent-list" id="recentList"><div style="color:var(--muted);font-size:.85rem">No interviews yet. <span style="color:var(--accent);cursor:pointer" onclick="showView('interview')">Start your first one →</span></div></div>
+          </div>
+        </div>
+
+        <!-- ─── INTERVIEW VIEW ─── -->
+        <div id="viewInterview" style="display:none">
+          <!-- SETUP SCREEN -->
+          <div class="setup-screen" id="setupScreen">
+            <div class="page-header">
+              <div class="page-title">Start Interview 🎯</div>
+              <div class="page-sub">Choose a topic and begin your AI-powered mock interview</div>
+            </div>
+            <div class="topic-grid" id="topicGrid">
+              <div class="topic-card sel" onclick="selTopic(this,'general')"><div class="tc-icon">👤</div><div class="tc-name">General HR</div><div class="tc-desc">Behavioral questions</div></div>
+              <div class="topic-card" onclick="selTopic(this,'python')"><div class="tc-icon">🐍</div><div class="tc-name">Python</div><div class="tc-desc">Core language concepts</div></div>
+              <div class="topic-card" onclick="selTopic(this,'machine learning')"><div class="tc-icon">🤖</div><div class="tc-name">Machine Learning</div><div class="tc-desc">ML algorithms & theory</div></div>
+              <div class="topic-card" onclick="selTopic(this,'data structures')"><div class="tc-icon">🌳</div><div class="tc-name">Data Structures</div><div class="tc-desc">Algorithms & DS</div></div>
+              <div class="topic-card" onclick="selTopic(this,'javascript')"><div class="tc-icon">⚡</div><div class="tc-name">JavaScript</div><div class="tc-desc">JS concepts & async</div></div>
+              <div class="topic-card" onclick="selTopic(this,'system design')"><div class="tc-icon">🏗️</div><div class="tc-name">System Design</div><div class="tc-desc">Architecture concepts</div></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <button class="btn btn-primary" style="width:auto;padding:13px 36px" onclick="beginInterview()">Begin Interview →</button>
+              <span style="font-size:.82rem;color:var(--muted)">5 questions · ~10 minutes · Video recorded</span>
+            </div>
+          </div>
+
+          <!-- INTERVIEW SCREEN -->
+          <div class="interview-screen" id="interviewScreen">
+            <div class="progress-strip">
+              <div class="ps-row"><span class="ps-title" id="iTopicLabel">Interview</span><span class="ps-num" id="iQNum">Q 1/5</span></div>
+              <div class="prog-track"><div class="prog-fill" id="iProgFill" style="width:20%"></div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div class="q-card">
+                <div class="q-num-badge">🎯 <span id="qBadge">Question 1</span></div>
+                <div class="q-text" id="qText"><div class="loading-row"><div class="spin"></div>Generating question…</div></div>
+              </div>
+              <div class="ans-card">
+                <div class="ans-top">
+                  <span class="ans-label">Your Answer</span>
+                  <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤 Speak</button>
+                </div>
+                <textarea id="ansBox" placeholder="Type your answer here, or click 🎤 Speak to use voice recognition…"></textarea>
+                <div class="ans-actions">
+                  <button class="btn btn-submit" id="submitBtn" onclick="submitAns()">Submit Answer →</button>
+                  <button class="btn btn-skip" onclick="skipQ()">Skip</button>
+                </div>
+                <div class="score-chips" id="scoreChips">
+                  <span class="chip" id="chipTotal"></span>
+                  <span class="chip g" id="chipClar"></span>
+                  <span class="chip o" id="chipRelev"></span>
+                </div>
+                <ul class="feedback-list" id="feedbackUL"></ul>
+              </div>
+            </div>
+            <!-- Sidebar -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="cam-widget">
+                <div class="cam-hdr"><span class="cam-title">Live Camera</span><span class="rec-dot">REC</span></div>
+                <video id="webcamVid" autoplay muted playsinline></video>
+                <div class="emotion-panel">
+                  <div class="ep-label">Detected Emotion</div>
+                  <div class="emotion-display">
+                    <span class="em-big" id="emIcon">😐</span>
+                    <div class="em-info"><div class="em-nm" id="emName">Neutral</div><div class="em-cv" id="emConf">—</div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="perf-widget">
+                <div class="perf-title">Live Performance</div>
+                <div class="perf-row"><div class="perf-lbl"><span>NLP Score</span><span class="perf-val" id="pNlp">—</span></div><div class="perf-track"><div class="perf-fill" id="pfNlp" style="width:0"></div></div></div>
+                <div class="perf-row"><div class="perf-lbl"><span>Clarity</span><span class="perf-val" id="pClar">—</span></div><div class="perf-track"><div class="perf-fill" id="pfClar" style="width:0"></div></div></div>
+                <div class="perf-row"><div class="perf-lbl"><span>Confidence</span><span class="perf-val" id="pConf">—</span></div><div class="perf-track"><div class="perf-fill" id="pfConf" style="width:0"></div></div></div>
+                <button class="end-btn" onclick="endInterview()">🏁 Finish & Get Report</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- REPORT SCREEN -->
+          <div class="report-screen" id="reportScreen">
+            <div class="report-hero">
+              <div class="report-badge">✅ Interview Complete</div>
+              <h2 style="font-size:1.8rem;font-weight:800;letter-spacing:-1px">Your Performance Report</h2>
+              <div class="report-score-big" id="rBigScore">—</div>
+              <div class="report-grade" id="rGrade">Calculating…</div>
+            </div>
+            <div class="report-sub-grid">
+              <div class="rsub"><div class="rsub-val" id="rNlp">—</div><div class="rsub-label">NLP Score</div></div>
+              <div class="rsub"><div class="rsub-val" id="rConf">—</div><div class="rsub-label">Confidence</div></div>
+              <div class="rsub"><div class="rsub-val" id="rEmo">—</div><div class="rsub-label">Dominant Emotion</div></div>
+            </div>
+            <div class="report-card">
+              <h3>🤖 AI Feedback</h3>
+              <div class="report-text" id="reportText"><div class="loading-row"><div class="spin"></div> Generating AI report…</div></div>
+            </div>
+            <div class="report-card">
+              <h3>📝 Q&A Review</h3>
+              <div class="qa-review" id="qaReview"></div>
+            </div>
+            <div class="report-actions">
+              <button class="btn btn-ghost" onclick="resetInterview()">🔄 Try Again</button>
+              <button class="btn btn-ghost" onclick="showView('history')">📋 View History</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── HISTORY VIEW ─── -->
+        <div id="viewHistory" style="display:none">
+          <div class="page-header">
+            <div class="page-title">Interview History 📋</div>
+            <div class="page-sub">Review past sessions, replay recordings, and track your progress</div>
+          </div>
+          <div class="history-filters" id="histFilters">
+            <button class="filter-btn active" onclick="filterHistory(this,'all')">All Topics</button>
+            <button class="filter-btn" onclick="filterHistory(this,'general')">👤 General</button>
+            <button class="filter-btn" onclick="filterHistory(this,'python')">🐍 Python</button>
+            <button class="filter-btn" onclick="filterHistory(this,'machine learning')">🤖 ML</button>
+            <button class="filter-btn" onclick="filterHistory(this,'data structures')">🌳 DSA</button>
+            <button class="filter-btn" onclick="filterHistory(this,'javascript')">⚡ JS</button>
+          </div>
+          <div class="history-grid" id="historyGrid">
+            <div class="loading-row"><div class="spin"></div> Loading history…</div>
+          </div>
+        </div>
+
+      </div><!-- .content-inner -->
+    </div><!-- .main-content -->
+  </div>
+</div>
+
+<!-- ─── DETAIL MODAL ─── -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <span class="modal-title" id="modalTitle">Interview Detail</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════════════
+const API = "http://localhost:5000";
+const TOTAL_Q = 5;
+
+// ════════════════════════════════════════════════════════
+//  AUTH STATE
+// ════════════════════════════════════════════════════════
+let TOKEN = localStorage.getItem("ai_token");
+let USER  = JSON.parse(localStorage.getItem("ai_user") || "null");
+
+// ── Headers ──
+function authHeaders() {
+  return { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` };
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+window.onload = () => {
+  if (TOKEN && USER) { enterApp(); }
+};
+
+function enterApp() {
+  document.getElementById("authPage").classList.remove("active");
+  document.getElementById("appPage").classList.add("active");
+  document.getElementById("navAvatar").textContent = USER.avatar || "👤";
+  document.getElementById("navName").textContent   = USER.name;
+  document.getElementById("navEmail").textContent  = USER.email;
+  document.getElementById("dashGreeting").textContent = `Welcome back, ${USER.name} ${USER.avatar} 👋`;
+  showView("dashboard");
+  loadDashboard();
+}
+
+// ════════════════════════════════════════════════════════
+//  AUTH TABS
+// ════════════════════════════════════════════════════════
+function switchTab(t) {
+  document.querySelectorAll(".auth-tab").forEach((el,i) => el.classList.toggle("active", (t==="login"&&i===0)||(t==="register"&&i===1)));
+  document.getElementById("loginForm").style.display    = t==="login"    ? "block" : "none";
+  document.getElementById("registerForm").style.display = t==="register" ? "block" : "none";
+}
+
+let selectedAvatar = "🧑‍💻";
+function pickAvatar(el, av) {
+  document.querySelectorAll(".avatar-opt").forEach(e => e.classList.remove("selected"));
+  el.classList.add("selected"); selectedAvatar = av;
+}
+
+// ════════════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass  = document.getElementById("loginPass").value.trim();
+  document.getElementById("loginErr").textContent = "";
+  if (!email || !pass) { document.getElementById("loginErr").textContent = "Please fill all fields"; return; }
+
+  const btn = document.getElementById("loginBtn");
+  btn.disabled = true; btn.textContent = "Signing in…";
+
+  try {
+    const r = await fetch(`${API}/api/auth/login`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,password:pass}) });
+    const d = await r.json();
+    if (d.success) { TOKEN = d.token; USER = d.user; localStorage.setItem("ai_token",TOKEN); localStorage.setItem("ai_user",JSON.stringify(USER)); enterApp(); toast(d.message,"success"); }
+    else { document.getElementById("loginErr").textContent = d.error; }
+  } catch(e) {
+    document.getElementById("loginErr").textContent = "Cannot connect to server. Is backend running?";
+  }
+  btn.disabled = false; btn.textContent = "Sign In →";
+}
+
+async function demoLogin() {
+  // Try to register demo account then login
+  await fetch(`${API}/api/auth/register`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"Demo User",email:"demo@interviewai.com",password:"demo123"})});
+  document.getElementById("loginEmail").value = "demo@interviewai.com";
+  document.getElementById("loginPass").value  = "demo123";
+  doLogin();
+}
+
+// ════════════════════════════════════════════════════════
+//  REGISTER
+// ════════════════════════════════════════════════════════
+async function doRegister() {
+  const name  = document.getElementById("regName").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
+  const pass  = document.getElementById("regPass").value.trim();
+  document.getElementById("regErr").textContent = "";
+
+  const btn = document.getElementById("regBtn");
+  btn.disabled = true; btn.textContent = "Creating…";
+
+  try {
+    const r = await fetch(`${API}/api/auth/register`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name,email,password:pass}) });
+    const d = await r.json();
+    if (d.success) { TOKEN = d.token; USER = d.user; localStorage.setItem("ai_token",TOKEN); localStorage.setItem("ai_user",JSON.stringify(USER)); enterApp(); toast("Account created! Welcome 🎉","success"); }
+    else { document.getElementById("regErr").textContent = d.error; }
+  } catch(e) {
+    document.getElementById("regErr").textContent = "Cannot connect to server.";
+  }
+  btn.disabled = false; btn.textContent = "Create Account →";
+}
+
+function logout() {
+  TOKEN = null; USER = null;
+  localStorage.removeItem("ai_token"); localStorage.removeItem("ai_user");
+  document.getElementById("appPage").classList.remove("active");
+  document.getElementById("authPage").classList.add("active");
+  switchTab("login");
+}
+
+// ════════════════════════════════════════════════════════
+//  VIEW NAVIGATION
+// ════════════════════════════════════════════════════════
+function showView(v) {
+  ["viewDashboard","viewInterview","viewHistory"].forEach(id => document.getElementById(id).style.display = "none");
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+  document.getElementById(`view${v.charAt(0).toUpperCase()+v.slice(1)}`).style.display = "block";
+  const idx = ["dashboard","interview","history"].indexOf(v);
+  if(idx >= 0) document.querySelectorAll(".nav-item")[idx].classList.add("active");
+
+  if (v === "history")   loadHistory();
+  if (v === "dashboard") loadDashboard();
+}
+
+// ════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const r = await fetch(`${API}/api/interviews/stats`, { headers: authHeaders() });
+    const d = await r.json();
+    if (!d.success) return;
+    const s = d.stats;
+    document.getElementById("statTotal").textContent  = s.total  || 0;
+    document.getElementById("statAvg").textContent    = s.avg_score  ? s.avg_score+"/100"  : "—";
+    document.getElementById("statBest").textContent   = s.best_score ? s.best_score+"/100" : "—";
+    document.getElementById("statTopics").textContent = (s.topic_counts ? Object.keys(s.topic_counts).length : 0);
+
+    // Bar chart
+    if (s.scores_over_time && s.scores_over_time.length) {
+      const chart = document.getElementById("barChart");
+      const last  = s.scores_over_time.slice(-8);
+      chart.innerHTML = last.map(p => `
+        <div class="bar-wrap">
+          <div class="bar" style="height:${p.score}%">
+            <div class="bar-tip">${p.score}</div>
+          </div>
+          <span class="bar-label">${p.date}</span>
+        </div>`).join("");
+    }
+
+    // Emotion chart
+    if (s.emotion_totals && Object.keys(s.emotion_totals).length) {
+      const total = Object.values(s.emotion_totals).reduce((a,b)=>a+b,0);
+      const emoEl = document.getElementById("emotionChart");
+      emoEl.innerHTML = Object.entries(s.emotion_totals).sort((a,b)=>b[1]-a[1]).map(([em,ct]) => `
+        <div class="emotion-chip-row">
+          <span class="em-name">${emojis[em]||'😐'} ${em}</span>
+          <div class="em-track"><div class="em-fill" style="width:${Math.round(ct/total*100)}%"></div></div>
+          <span class="em-count">${ct}</span>
+        </div>`).join("");
+    }
+
+    // Recent
+    if (s.recent && s.recent.length) {
+      const iconMap = {general:"👤",python:"🐍","machine learning":"🤖","data structures":"🌳",javascript:"⚡","system design":"🏗️"};
+      document.getElementById("recentList").innerHTML = s.recent.reverse().map(i => `
+        <div class="recent-item" onclick="openDetail(${i.id})">
+          <div class="ri-icon">${iconMap[i.topic]||'📋'}</div>
+          <div><div class="ri-topic">${i.topic}</div><div class="ri-date">${fmtDate(i.created_at)}</div></div>
+          <div class="ri-score">${i.overall_score}/100</div>
+        </div>`).join("");
+    }
+  } catch(e) { console.log("Dashboard load error",e); }
+}
+
+// ════════════════════════════════════════════════════════
+//  INTERVIEW STATE
+// ════════════════════════════════════════════════════════
+let iS = {};   // interview state
+
+function resetIState() {
+  iS = {
+    topic:"general", currentQ:0, currentQuestion:"",
+    qaPairs:[], nlpScores:[], clarityScores:[], confScores:[],
+    emotionLog:[], emotionCounts:{},
+    stream:null, mediaRec:null, audioRec:null,
+    videoChunks:[], audioChunks:[],
+    isRec:false, recognition:null,
+    startTime: Date.now()
+  };
+}
+
+// ════════════════════════════════════════════════════════
+//  TOPIC SELECT
+// ════════════════════════════════════════════════════════
+function selTopic(el, t) {
+  document.querySelectorAll(".topic-card").forEach(c=>c.classList.remove("sel"));
+  el.classList.add("sel"); iS.topic = t;
+}
+
+// ════════════════════════════════════════════════════════
+//  BEGIN INTERVIEW
+// ════════════════════════════════════════════════════════
+async function beginInterview() {
+  resetIState();
+  document.getElementById("setupScreen").classList.add("hidden");
+  const is = document.getElementById("interviewScreen");
+  is.classList.add("active");
+  document.getElementById("reportScreen").classList.remove("active");
+  document.getElementById("iTopicLabel").textContent = iS.topic.charAt(0).toUpperCase()+iS.topic.slice(1)+" Interview";
+
+  await setupWebcam();
+  loadNextQ();
+}
+
+// ════════════════════════════════════════════════════════
+//  WEBCAM + RECORDING
+// ════════════════════════════════════════════════════════
+async function setupWebcam() {
+  try {
+    iS.stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+    document.getElementById("webcamVid").srcObject = iS.stream;
+
+    // Video recorder (for full interview video)
+    iS.mediaRec = new MediaRecorder(iS.stream, { mimeType:"video/webm;codecs=vp8,opus" });
+    iS.mediaRec.ondataavailable = e => { if(e.data.size) iS.videoChunks.push(e.data); };
+    iS.mediaRec.start(1000);
+
+    // Audio-only recorder
+    const audioStream = new MediaStream(iS.stream.getAudioTracks());
+    iS.audioRec = new MediaRecorder(audioStream, { mimeType:"audio/webm" });
+    iS.audioRec.ondataavailable = e => { if(e.data.size) iS.audioChunks.push(e.data); };
+    iS.audioRec.start(1000);
+
+    // Emotion detection every 5s
+    iS.emotionTimer = setInterval(captureEmotion, 5000);
+  } catch(e) {
+    toast("Camera/mic not available — recording disabled","error");
+  }
+}
+
+function stopRecording() {
+  clearInterval(iS.emotionTimer);
+  if(iS.mediaRec && iS.mediaRec.state !== "inactive") iS.mediaRec.stop();
+  if(iS.audioRec && iS.audioRec.state !== "inactive") iS.audioRec.stop();
+  if(iS.stream) iS.stream.getTracks().forEach(t=>t.stop());
+}
+
+async function captureEmotion() {
+  const vid = document.getElementById("webcamVid");
+  if(!vid.srcObject) return;
+  const canvas = document.createElement("canvas");
+  canvas.width = vid.videoWidth||320; canvas.height = vid.videoHeight||240;
+  canvas.getContext("2d").drawImage(vid,0,0);
+  const b64 = canvas.toDataURL("image/jpeg",.7);
+
+  try {
+    const r = await fetch(`${API}/api/analyze-emotion`,{method:"POST",headers:authHeaders(),body:JSON.stringify({image:b64})});
+    const d = await r.json();
+    if(d.success) {
+      const em = d.dominant_emotion;
+      document.getElementById("emIcon").textContent = emojis[em]||"😐";
+      document.getElementById("emName").textContent = em;
+      document.getElementById("emConf").textContent = `${d.confidence_score}% confidence`;
+      iS.emotionCounts[em] = (iS.emotionCounts[em]||0)+1;
+      iS.emotionLog.push({ emotion:em, confidence:d.confidence_score, timestamp:Math.round((Date.now()-iS.startTime)/1000) });
+      updatePerfBars({ confidence:d.confidence_score });
+    }
+  } catch(e) { /* backend not running */ }
+}
+
+// ════════════════════════════════════════════════════════
+//  QUESTIONS
+// ════════════════════════════════════════════════════════
+const FALLBACK_Q = {
+  general:["Tell me about yourself.","Your greatest strength?","Where in 5 years?","Describe a challenge.","Why hire you?"],
+  python:["List vs tuple?","What are decorators?","Explain the GIL.","What is a generator?","Explain *args **kwargs."],
+  "machine learning":["What is overfitting?","Explain gradient descent.","What is cross-validation?","Bias-variance tradeoff?","What is regularization?"],
+  "data structures":["Stack vs Queue?","What is a hash table?","BST time complexity?","Linked list vs array?","Explain dynamic programming."],
+  javascript:["var vs let vs const?","What is closure?","Explain promises.","What is event loop?","async/await explained?"],
+  "system design":["Design a URL shortener.","Explain load balancing.","What is CAP theorem?","How does caching work?","Microservices vs monolith?"]
+};
+
+async function loadNextQ() {
+  iS.currentQ++;
+  updateIProgress();
+  document.getElementById("qText").innerHTML = '<div class="loading-row"><div class="spin"></div>Generating question…</div>';
+  document.getElementById("ansBox").value = "";
+  document.getElementById("scoreChips").classList.remove("show");
+  document.getElementById("feedbackUL").classList.remove("show");
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("submitBtn").textContent = "Submit Answer →";
+
+  try {
+    const r = await fetch(`${API}/api/generate-question`,{method:"POST",headers:authHeaders(),body:JSON.stringify({topic:iS.topic,question_number:iS.currentQ,previous_answers:iS.qaPairs.map(p=>p.answer)})});
+    const d = await r.json();
+    iS.currentQuestion = d.question;
+    document.getElementById("qText").textContent = d.question;
+  } catch(e) {
+    const bank = FALLBACK_Q[iS.topic]||FALLBACK_Q["general"];
+    iS.currentQuestion = bank[(iS.currentQ-1)%bank.length];
+    document.getElementById("qText").textContent = iS.currentQuestion;
+  }
+  document.getElementById("qBadge").textContent = `Question ${iS.currentQ}`;
+}
+
+function updateIProgress() {
+  const pct = (iS.currentQ/TOTAL_Q)*100;
+  document.getElementById("iProgFill").style.width = pct+"%";
+  document.getElementById("iQNum").textContent = `Q ${iS.currentQ}/${TOTAL_Q}`;
+}
+
+// ════════════════════════════════════════════════════════
+//  SUBMIT ANSWER
+// ════════════════════════════════════════════════════════
+async function submitAns() {
+  const ans = document.getElementById("ansBox").value.trim();
+  if(!ans||ans.length<5){ toast("Please provide an answer first","error"); return; }
+
+  stopMic();
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("submitBtn").innerHTML = '<div class="spin"></div> Analyzing…';
+
+  try {
+    const r = await fetch(`${API}/api/analyze-answer`,{method:"POST",headers:authHeaders(),body:JSON.stringify({answer:ans,question:iS.currentQuestion,topic:iS.topic})});
+    const d = await r.json();
+
+    if(d.success){
+      document.getElementById("chipTotal").textContent = `Overall: ${d.overall_score}/100`;
+      document.getElementById("chipClar").textContent  = `Clarity: ${d.scores.clarity}/100`;
+      document.getElementById("chipRelev").textContent = `Relevance: ${d.scores.relevance}/100`;
+      document.getElementById("scoreChips").classList.add("show");
+      document.getElementById("feedbackUL").innerHTML = d.feedback.map(f=>`<li>${f}</li>`).join("");
+      document.getElementById("feedbackUL").classList.add("show");
+
+      iS.nlpScores.push(d.overall_score);
+      iS.clarityScores.push(d.scores.clarity||0);
+      iS.confScores.push(d.scores.confidence||0);
+      updatePerfBars({ nlp:avg(iS.nlpScores), clarity:avg(iS.clarityScores), confidence:avg(iS.confScores) });
+
+      iS.qaPairs.push({ question:iS.currentQuestion, answer:ans, overall_score:d.overall_score,
+        clarity_score:d.scores.clarity||0, relevance_score:d.scores.relevance||0,
+        confidence_score:d.scores.confidence||0, word_count:d.stats.word_count||0,
+        filler_words:d.stats.filler_words||0, sentiment:d.stats.sentiment||0, feedback:d.feedback,
+        score:d.overall_score });
+    }
+  } catch(e) {
+    const wc  = ans.split(" ").length;
+    const sc  = Math.min(100,Math.max(20,wc*1.5));
+    iS.nlpScores.push(sc);
+    iS.qaPairs.push({ question:iS.currentQuestion, answer:ans, overall_score:sc, clarity_score:60, relevance_score:60, confidence_score:60, word_count:wc, filler_words:0, sentiment:0, feedback:[], score:sc });
+  }
+
+  document.getElementById("submitBtn").textContent = "Submit Answer →";
+  setTimeout(() => { if(iS.currentQ >= TOTAL_Q) endInterview(); else loadNextQ(); }, 1800);
+}
+
+function skipQ() {
+  iS.qaPairs.push({ question:iS.currentQuestion, answer:"[Skipped]", overall_score:0, clarity_score:0, relevance_score:0, confidence_score:0, word_count:0, filler_words:0, sentiment:0, feedback:[], score:0 });
+  if(iS.currentQ >= TOTAL_Q) endInterview(); else loadNextQ();
+}
+
+function updatePerfBars({nlp, clarity, confidence}) {
+  if(nlp!=null){ document.getElementById("pNlp").textContent=nlp+"%"; document.getElementById("pfNlp").style.width=nlp+"%"; }
+  if(clarity!=null){ document.getElementById("pClar").textContent=clarity+"%"; document.getElementById("pfClar").style.width=clarity+"%"; }
+  if(confidence!=null){ document.getElementById("pConf").textContent=confidence+"%"; document.getElementById("pfConf").style.width=confidence+"%"; }
+}
+
+// ════════════════════════════════════════════════════════
+//  END INTERVIEW → REPORT
+// ════════════════════════════════════════════════════════
+async function endInterview() {
+  stopMic();
+  stopRecording();
+
+  // Wait a moment for recorder to flush
+  await new Promise(r => setTimeout(r, 800));
+
+  const is = document.getElementById("interviewScreen");
+  const rs = document.getElementById("reportScreen");
+  is.classList.remove("active");
+  rs.classList.add("active");
+
+  const avgNlp  = avg(iS.nlpScores);
+  const avgConf = avg(iS.confScores);
+  const avgClar = avg(iS.clarityScores);
+  const domEmo  = getDomEmotion();
+  const overall = Math.round((avgNlp*0.6 + avgConf*0.4)) || avgNlp || 50;
+
+  document.getElementById("rBigScore").textContent = `${overall}/100`;
+  document.getElementById("rGrade").textContent    = gradeLabel(overall);
+  document.getElementById("rNlp").textContent  = avgNlp;
+  document.getElementById("rConf").textContent = avgConf;
+  document.getElementById("rEmo").textContent  = domEmo;
+
+  // Build Q&A review
+  const iconMap = { general:"👤",python:"🐍","machine learning":"🤖","data structures":"🌳",javascript:"⚡","system design":"🏗️" };
+  document.getElementById("qaReview").innerHTML = iS.qaPairs.map((qa,i) => `
+    <div class="qa-item">
+      <div class="qa-q">Q${i+1}: ${qa.question}</div>
+      <div class="qa-a">${qa.answer === "[Skipped]" ? "<em>Skipped</em>" : qa.answer.slice(0,200)+"…"}</div>
+      <div class="qa-score-row">
+        <span class="chip">Score: ${qa.overall_score}/100</span>
+        <span class="chip g">Clarity: ${qa.clarity_score}</span>
+        <span class="chip o">Relevance: ${qa.relevance_score}</span>
+      </div>
+    </div>`).join("");
+
+  // Get AI report
+  try {
+    const r = await fetch(`${API}/api/final-report`,{method:"POST",headers:authHeaders(),body:JSON.stringify({topic:iS.topic,qa_pairs:iS.qaPairs,avg_emotion:domEmo,avg_nlp_score:avgNlp})});
+    const d = await r.json();
+    document.getElementById("reportText").textContent = d.report;
+
+    // Save to DB
+    await saveInterview(overall, avgNlp, avgConf, avgClar, domEmo, d.grade||gradeLetter(overall), d.report);
+  } catch(e) {
+    document.getElementById("reportText").textContent = `Score: ${overall}/100\nDominant emotion: ${domEmo}\n\nTips:\n• Use STAR method\n• Give specific examples\n• Practice confident tone`;
+    await saveInterview(overall, avgNlp, avgConf, avgClar, domEmo, gradeLetter(overall), "");
+  }
+}
+
+async function saveInterview(overall, nlp, conf, clar, emo, grade, report) {
+  // Convert video/audio chunks to base64
+  let videoB64 = null, audioB64 = null;
+  try {
+    if(iS.videoChunks.length){
+      const blob = new Blob(iS.videoChunks, {type:"video/webm"});
+      videoB64 = await blobToBase64(blob);
+    }
+    if(iS.audioChunks.length){
+      const blob = new Blob(iS.audioChunks, {type:"audio/webm"});
+      audioB64 = await blobToBase64(blob);
+    }
+  } catch(e) { console.log("Media conversion error",e); }
+
+  const payload = {
+    topic: iS.topic,
+    overall_score: overall, nlp_score: nlp, confidence_score: conf, clarity_score: clar,
+    dominant_emotion: emo, grade, ai_report: report,
+    duration_secs: Math.round((Date.now()-iS.startTime)/1000),
+    qa_pairs: iS.qaPairs, emotion_log: iS.emotionLog,
+    video_blob: videoB64, audio_blob: audioB64
+  };
+
+  try {
+    const r = await fetch(`${API}/api/interviews/save`,{method:"POST",headers:authHeaders(),body:JSON.stringify(payload)});
+    const d = await r.json();
+    if(d.success) toast("Interview saved to history ✅","success");
+  } catch(e) { console.log("Save error",e); }
+}
+
+function blobToBase64(blob) {
+  return new Promise((res,rej) => {
+    const fr = new FileReader();
+    fr.onload  = () => res(fr.result);
+    fr.onerror = rej;
+    fr.readAsDataURL(blob);
+  });
+}
+
+function resetInterview() {
+  document.getElementById("reportScreen").classList.remove("active");
+  document.getElementById("interviewScreen").classList.remove("active");
+  document.getElementById("setupScreen").classList.remove("hidden");
+  resetIState();
+}
+
+// ════════════════════════════════════════════════════════
+//  HISTORY
+// ════════════════════════════════════════════════════════
+let histAll = [], histFilter = "all";
+
+async function loadHistory() {
+  document.getElementById("historyGrid").innerHTML = '<div class="loading-row"><div class="spin"></div> Loading history…</div>';
+  try {
+    const r = await fetch(`${API}/api/interviews/history?per_page=50`, { headers:authHeaders() });
+    const d = await r.json();
+    histAll = d.interviews || [];
+    renderHistory();
+  } catch(e) {
+    document.getElementById("historyGrid").innerHTML = '<div class="loading-row" style="color:var(--red)">Could not load history. Is backend running?</div>';
+  }
+}
+
+function filterHistory(btn, topic) {
+  document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  histFilter = topic;
+  renderHistory();
+}
+
+const topicIcons = { general:"👤",python:"🐍","machine learning":"🤖","data structures":"🌳",javascript:"⚡","system design":"🏗️" };
+
+function renderHistory() {
+  const list = histFilter==="all" ? histAll : histAll.filter(i=>i.topic===histFilter);
+  const el   = document.getElementById("historyGrid");
+
+  if(!list.length){
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><p>${histFilter==="all"?"No interviews yet. <b>Start practicing!</b>":"No "+histFilter+" interviews yet."}</p></div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(i => `
+    <div class="history-card">
+      <div class="hc-top">
+        <div class="hc-icon">${topicIcons[i.topic]||"📋"}</div>
+        <div><div class="hc-topic">${i.topic}</div><div class="hc-date">${fmtDate(i.created_at)} · ${i.questions_count} questions · ${fmtDur(i.duration_secs)}</div></div>
+        <div class="hc-score"><div class="hc-score-num">${i.overall_score}</div><div class="hc-grade">${i.grade}</div></div>
+      </div>
+      <div class="hc-chips">
+        <span class="hc-chip">NLP: ${i.nlp_score}</span>
+        <span class="hc-chip">Confidence: ${i.confidence_score}</span>
+        <span class="hc-chip">Clarity: ${i.clarity_score}</span>
+        <span class="hc-chip">${emojis[i.dominant_emotion]||"😐"} ${i.dominant_emotion}</span>
+        ${i.video_path ? '<span class="hc-chip" style="color:var(--green)">🎥 Video</span>' : ''}
+        ${i.audio_path ? '<span class="hc-chip" style="color:var(--accent)">🎙️ Audio</span>' : ''}
+      </div>
+      <div class="hc-actions">
+        <button class="hc-btn" onclick="openDetail(${i.id})">📄 View Details</button>
+        ${i.video_path ? `<button class="hc-btn" onclick="openVideo(${i.id})">▶️ Watch Video</button>` : ''}
+        ${i.audio_path ? `<button class="hc-btn" onclick="openAudio(${i.id})">🔊 Play Audio</button>` : ''}
+        <button class="hc-btn red" onclick="deleteInterview(${i.id},this)">🗑️ Delete</button>
+      </div>
+    </div>`).join("");
+}
+
+// ════════════════════════════════════════════════════════
+//  MODALS
+// ════════════════════════════════════════════════════════
+async function openDetail(id) {
+  document.getElementById("modalTitle").textContent = "Interview Details";
+  document.getElementById("modalBody").innerHTML = '<div class="loading-row"><div class="spin"></div> Loading…</div>';
+  document.getElementById("detailModal").classList.add("open");
+
+  try {
+    const r = await fetch(`${API}/api/interviews/${id}`, { headers:authHeaders() });
+    const d = await r.json();
+    const iv = d.interview;
+
+    const qaHtml = (iv.qa_pairs||[]).map((qa,i) => `
+      <div class="mqa-item">
+        <div class="mqa-num">Question ${qa.question_number}</div>
+        <div class="mqa-q">${qa.question}</div>
+        <div class="mqa-a">${qa.answer||"[No answer]"}</div>
+        <div class="score-bar-row"><span class="sbl">Overall</span><div class="sbt"><div class="sbf" style="width:${qa.overall_score}%"></div></div><span class="sbv">${qa.overall_score}</span></div>
+        <div class="score-bar-row"><span class="sbl">Clarity</span><div class="sbt"><div class="sbf" style="width:${qa.clarity_score}%"></div></div><span class="sbv">${qa.clarity_score}</span></div>
+        <div class="score-bar-row"><span class="sbl">Relevance</span><div class="sbt"><div class="sbf" style="width:${qa.relevance_score}%"></div></div><span class="sbv">${qa.relevance_score}</span></div>
+      </div>`).join("");
+
+    document.getElementById("modalBody").innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+        <div class="rsub"><div class="rsub-val">${iv.overall_score}</div><div class="rsub-label">Overall</div></div>
+        <div class="rsub"><div class="rsub-val">${iv.grade}</div><div class="rsub-label">Grade</div></div>
+        <div class="rsub"><div class="rsub-val" style="font-size:1.4rem">${emojis[iv.dominant_emotion]||"😐"} ${iv.dominant_emotion}</div><div class="rsub-label">Emotion</div></div>
+      </div>
+      ${iv.ai_report ? `<div style="background:var(--s2);border-radius:var(--r);padding:16px;margin-bottom:20px;font-size:.85rem;line-height:1.8;color:var(--muted);white-space:pre-line">${iv.ai_report}</div>` : ''}
+      <div class="mqa-num" style="margin-bottom:12px;letter-spacing:1px">Q&A REVIEW</div>
+      <div class="modal-qa-list">${qaHtml}</div>`;
+  } catch(e) {
+    document.getElementById("modalBody").innerHTML = '<div style="color:var(--red)">Failed to load details.</div>';
+  }
+}
+
+async function openVideo(id) {
+  document.getElementById("modalTitle").textContent = "Interview Recording";
+  document.getElementById("modalBody").innerHTML = `
+    <div class="media-player">
+      <video controls style="width:100%;border-radius:var(--r)">
+        <source src="${API}/api/media/video/${id}?token=${TOKEN}" type="video/webm">
+        Your browser does not support video.
+      </video>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);text-align:center">Your interview recording · Use controls to play/pause</p>`;
+  document.getElementById("detailModal").classList.add("open");
+}
+
+async function openAudio(id) {
+  document.getElementById("modalTitle").textContent = "Audio Recording";
+  document.getElementById("modalBody").innerHTML = `
+    <div class="media-player" style="padding:20px">
+      <audio controls style="width:100%">
+        <source src="${API}/api/media/audio/${id}?token=${TOKEN}" type="audio/webm">
+        Your browser does not support audio.
+      </audio>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);text-align:center">Your audio recording from this interview session</p>`;
+  document.getElementById("detailModal").classList.add("open");
+}
+
+function closeModal() {
+  document.getElementById("detailModal").classList.remove("open");
+  document.getElementById("modalBody").innerHTML = "";
+}
+
+// Close on outside click
+document.getElementById("detailModal").addEventListener("click", function(e) {
+  if(e.target === this) closeModal();
+});
+
+async function deleteInterview(id, btn) {
+  if(!confirm("Delete this interview? This cannot be undone.")) return;
+  btn.textContent = "Deleting…"; btn.disabled = true;
+  try {
+    const r = await fetch(`${API}/api/interviews/${id}`,{method:"DELETE",headers:authHeaders()});
+    const d = await r.json();
+    if(d.success){ toast("Interview deleted","success"); loadHistory(); }
+    else { toast("Delete failed","error"); btn.textContent="🗑️ Delete"; btn.disabled=false; }
+  } catch(e) { toast("Error","error"); btn.textContent="🗑️ Delete"; btn.disabled=false; }
+}
+
+// ════════════════════════════════════════════════════════
+//  SPEECH RECOGNITION
+// ════════════════════════════════════════════════════════
+function toggleMic() {
+  if(iS.isRec){ stopMic(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast("Speech recognition needs Chrome browser","error"); return; }
+  iS.recognition = new SR();
+  iS.recognition.lang = "en-US";
+  iS.recognition.continuous = true;
+  iS.recognition.interimResults = true;
+  iS.recognition.onresult = e => {
+    let t = ""; for(let i=0;i<e.results.length;i++) t += e.results[i][0].transcript;
+    document.getElementById("ansBox").value = t;
+  };
+  iS.recognition.onerror = () => { toast("Mic error","error"); stopMic(); };
+  iS.recognition.onend  = () => { if(iS.isRec) iS.recognition.start(); };
+  iS.recognition.start();
+  iS.isRec = true;
+  document.getElementById("micBtn").textContent = "⏹ Stop";
+  document.getElementById("micBtn").classList.add("rec");
+}
+
+function stopMic() {
+  if(iS.recognition) iS.recognition.stop();
+  iS.isRec = false;
+  document.getElementById("micBtn").textContent = "🎤 Speak";
+  document.getElementById("micBtn").classList.remove("rec");
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+const emojis = { happy:"😊",sad:"😢",angry:"😠",fear:"😨",surprise:"😮",disgust:"🤢",neutral:"😐" };
+
+function avg(arr){ return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0; }
+function getDomEmotion(){ const e = iS.emotionCounts; if(!Object.keys(e).length) return "neutral"; return Object.entries(e).sort((a,b)=>b[1]-a[1])[0][0]; }
+function fmtDate(iso){ return new Date(iso).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}); }
+function fmtDur(s){ if(!s) return "—"; const m=Math.floor(s/60); const sec=s%60; return m ? `${m}m ${sec}s` : `${sec}s`; }
+function gradeLetter(s){ if(s>=90) return "A+"; if(s>=80) return "A"; if(s>=70) return "B"; if(s>=60) return "C"; if(s>=50) return "D"; return "F"; }
+function gradeLabel(s){ if(s>=90) return "🏆 Excellent — Interview Ready!"; if(s>=75) return "👍 Good — Almost there!"; if(s>=60) return "📈 Average — Keep practicing"; return "💪 Keep going — Practice makes perfect"; }
+
+function toast(msg, type="") {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = "toast show "+(type||"");
+  setTimeout(()=>t.classList.remove("show"), 3000);
+}
+
+// Ctrl+Enter to submit
+document.addEventListener("keydown", e => {
+  if(e.ctrlKey && e.key==="Enter") {
+    const iv = document.getElementById("interviewScreen");
+    if(iv.classList.contains("active")) submitAns();
+  }
+});
+</script>
+</body>
+</html>
