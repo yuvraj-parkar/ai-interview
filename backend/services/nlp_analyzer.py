@@ -1,67 +1,57 @@
-"""
-nlp_analyzer.py  — NO SPACY VERSION
-Analyzes interview answers using TextBlob + pure Python.
-No spaCy needed! Works on Python 3.13.
-"""
-
 from textblob import TextBlob
 import re
 
 TECH_KEYWORDS = {
-    "python","java","javascript","machine learning","deep learning","neural network",
-    "database","sql","api","framework","algorithm","data structure","cloud","docker",
-    "git","agile","software","development","testing","debugging","optimization"
+    "python", "java", "javascript", "machine learning", "deep learning", "neural network",
+    "database", "sql", "api", "framework", "algorithm", "data structure", "cloud", "docker",
+    "git", "agile", "software", "development", "testing", "debugging", "optimization",
 }
 SOFT_SKILL_KEYWORDS = {
-    "team","leadership","communication","problem","solution","challenge","manage",
-    "collaborate","responsible","initiative","creative","deadline","priority",
-    "conflict","mentor"
+    "team", "leadership", "communication", "problem", "solution", "challenge", "manage",
+    "collaborate", "responsible", "initiative", "creative", "deadline", "priority",
+    "conflict", "mentor",
 }
-FILLER_WORDS = ["um","uh","you know","basically","literally","actually",
-                "honestly","sort of","kind of"]
+FILLER_WORDS = ["um", "uh", "you know", "basically", "literally", "actually",
+                "honestly", "sort of", "kind of"]
 
 
-def analyze_answer(answer_text: str, question: str = "") -> dict:
+def analyze_answer(answer_text, question=""):
     if not answer_text or len(answer_text.strip()) < 5:
         return _empty_result("Answer is too short.")
 
-    text       = answer_text.strip()
+    text = answer_text.strip()
     lower_text = text.lower()
-    blob       = TextBlob(text)
+    blob = TextBlob(text)
 
-    # Word & sentence counts using pure Python
-    words          = [w for w in re.findall(r'\b\w+\b', text)]
-    word_count     = len(words)
-    sentences      = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+    words = re.findall(r'\b\w+\b', text)
+    word_count = len(words)
+    sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
     sentence_count = max(len(sentences), 1)
-    avg_words_per_s= word_count / sentence_count
-    unique_words   = len(set(w.lower() for w in words))
+    avg_words_per_s = word_count / sentence_count
+    unique_words = len(set(w.lower() for w in words))
     vocabulary_ratio = unique_words / max(word_count, 1)
 
-    # Keyword hits
-    tech_hits    = sum(1 for kw in TECH_KEYWORDS if kw in lower_text)
-    soft_hits    = sum(1 for kw in SOFT_SKILL_KEYWORDS if kw in lower_text)
+    tech_hits = sum(1 for kw in TECH_KEYWORDS if kw in lower_text)
+    soft_hits = sum(1 for kw in SOFT_SKILL_KEYWORDS if kw in lower_text)
     filler_count = sum(lower_text.count(fw) for fw in FILLER_WORDS)
 
-    # Sentiment via TextBlob
-    polarity     = blob.sentiment.polarity
+    polarity = blob.sentiment.polarity
     subjectivity = blob.sentiment.subjectivity
 
-    # Scores
-    length_score    = _score_length(word_count)
-    clarity_score   = _score_clarity(avg_words_per_s, filler_count, word_count)
+    length_score = _score_length(word_count)
+    clarity_score = _score_clarity(avg_words_per_s, filler_count, word_count)
     relevance_score = _score_relevance(tech_hits, soft_hits)
-    confidence_score= _score_confidence(polarity, subjectivity)
-    vocabulary_score= _score_vocabulary(vocabulary_ratio, unique_words)
+    confidence_score = _score_confidence(polarity, subjectivity)
+    vocabulary_score = _score_vocabulary(vocabulary_ratio, unique_words)
     structure_score = _score_structure(sentence_count, word_count)
 
     overall = int(
-        length_score     * 0.15 +
-        clarity_score    * 0.25 +
-        relevance_score  * 0.25 +
+        length_score * 0.15 +
+        clarity_score * 0.25 +
+        relevance_score * 0.25 +
         confidence_score * 0.15 +
         vocabulary_score * 0.10 +
-        structure_score  * 0.10
+        structure_score * 0.10
     )
 
     feedback = _generate_feedback(
@@ -70,28 +60,28 @@ def analyze_answer(answer_text: str, question: str = "") -> dict:
     )
 
     return {
-        "success":       True,
+        "success": True,
         "overall_score": overall,
-        "grade":         _grade(overall),
+        "grade": _grade(overall),
         "scores": {
-            "length":     length_score,
-            "clarity":    clarity_score,
-            "relevance":  relevance_score,
+            "length": length_score,
+            "clarity": clarity_score,
+            "relevance": relevance_score,
             "confidence": confidence_score,
             "vocabulary": vocabulary_score,
-            "structure":  structure_score
+            "structure": structure_score,
         },
         "stats": {
-            "word_count":     word_count,
+            "word_count": word_count,
             "sentence_count": sentence_count,
-            "unique_words":   unique_words,
-            "filler_words":   filler_count,
-            "tech_keywords":  tech_hits,
-            "soft_keywords":  soft_hits,
+            "unique_words": unique_words,
+            "filler_words": filler_count,
+            "tech_keywords": tech_hits,
+            "soft_keywords": soft_hits,
             "entities_found": 0,
-            "sentiment":      round(polarity, 2)
+            "sentiment": round(polarity, 2),
         },
-        "feedback": feedback
+        "feedback": feedback,
     }
 
 
@@ -103,12 +93,14 @@ def _score_length(wc):
     if wc <= 300: return 85
     return 60
 
+
 def _score_clarity(avg, fillers, total):
     score = 100
     if avg > 30: score -= 20
     if avg < 5:  score -= 15
     score -= int((fillers / max(total, 1)) * 200)
     return max(0, min(100, score))
+
 
 def _score_relevance(tech, soft):
     total = tech + soft
@@ -118,9 +110,11 @@ def _score_relevance(tech, soft):
     if total <= 8:  return 90
     return 100
 
+
 def _score_confidence(polarity, subjectivity):
     score = 60 + int(polarity * 30) - int(subjectivity * 15)
     return max(0, min(100, score))
+
 
 def _score_vocabulary(ratio, unique):
     if unique < 10:  return 30
@@ -129,11 +123,13 @@ def _score_vocabulary(ratio, unique):
     if ratio > 0.35: return 65
     return 50
 
+
 def _score_structure(sentences, words):
     if sentences < 2:   return 40
     if sentences <= 6:  return 90
     if sentences <= 10: return 75
     return 60
+
 
 def _generate_feedback(wc, fillers, tech, soft, polarity, sentences, vocab_ratio):
     tips = []
@@ -163,6 +159,7 @@ def _generate_feedback(wc, fillers, tech, soft, polarity, sentences, vocab_ratio
         tips.append("📚 Try using more varied vocabulary.")
     return tips
 
+
 def _grade(score):
     if score >= 90: return "A+"
     if score >= 80: return "A"
@@ -170,6 +167,7 @@ def _grade(score):
     if score >= 60: return "C"
     if score >= 50: return "D"
     return "F"
+
 
 def _empty_result(msg):
     return {"success": False, "overall_score": 0, "grade": "F",

@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+media/videos/
+media/audios/
+instance/
+.env
